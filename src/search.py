@@ -7,8 +7,9 @@ from .cache import TranspositionTable
 class SearchAlgorithm:
     """Base class for chess search algorithms."""
 
-    def __init__(self, evaluator):
+    def __init__(self, evaluator, validator):
         self.evaluator = evaluator
+        self.validator = validator
 
     def find_best_move(self, board):
         raise NotImplementedError
@@ -17,8 +18,8 @@ class SearchAlgorithm:
 class MinimaxSearch(SearchAlgorithm):
     """Minimax search with alpha-beta pruning and quiescence."""
 
-    def __init__(self, evaluator, max_depth=4):  # Updated to include max_depth
-        super().__init__(evaluator)
+    def __init__(self, evaluator, validator, max_depth=4):  # Updated to include max_depth
+        super().__init__(evaluator, validator)
         self.max_depth = max_depth
         self.time_limit = 5  # 5 seconds per move
         self.depth = 3  # Default depth

@@ -13,8 +13,8 @@ class ChessEngine:
         self.board = chess.Board()
         self.piece_squares = PieceSquareTables()
         self.evaluator = Evaluator(self.piece_squares)
-        self.search = MinimaxSearch(self.evaluator.evaluate)
         self.validator = MoveValidator()
+        self.search = MinimaxSearch(self.evaluator.evaluate, self.validator)
         self.current_color = chess.WHITE
 
     def get_valid_moves(self):
