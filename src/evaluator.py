@@ -1,4 +1,5 @@
 import chess
+from .constants import PIECE_VALUES
 
 
 class Evaluator:
@@ -6,14 +7,6 @@ class Evaluator:
 
     def __init__(self, piece_squares):
         self.piece_squares = piece_squares
-        self.piece_values = {
-            chess.PAWN: 100,
-            chess.KNIGHT: 320,
-            chess.BISHOP: 330,
-            chess.ROOK: 500,
-            chess.QUEEN: 900,
-            chess.KING: 20000,
-        }
 
     def evaluate(self, board):
         """Evaluate the current position."""
@@ -27,7 +20,7 @@ class Evaluator:
             if not piece:
                 continue
 
-            value = self.piece_values[piece.piece_type]
+            value = PIECE_VALUES[piece.piece_type]
             # Add position value
             value += self.piece_squares.get_piece_value(
                 piece.piece_type, square, piece.color, is_endgame
@@ -55,7 +48,7 @@ class Evaluator:
     def _get_material_count(self, board, color):
         """Calculate total material value for given color."""
         material = 0
-        for piece_type, value in self.piece_values.items():
+        for piece_type, value in PIECE_VALUES.items():
             if piece_type != chess.KING:  # Exclude king from material count
                 material += len(board.pieces(piece_type, color)) * value
         return material
