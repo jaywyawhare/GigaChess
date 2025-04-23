@@ -13,3 +13,9 @@ PIECE_VALUES = {
 # Search parameters
 MAX_QUIESCENCE_DEPTH = 5
 DEFAULT_SEARCH_DEPTH = 3
+
+# Evaluation parameters
+DOUBLED_PAWN_PENALTY = -20
+ISOLATED_PAWN_PENALTY = -15
+MOBILITY_BONUS = 2
+TIME_LIMIT = 5  # seconds per move
