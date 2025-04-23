@@ -27,35 +27,40 @@ class MinimaxSearch(SearchAlgorithm):
             return None
 
         best_move = None
-        best_score = float("-inf")
+        best_score = float("-inf") if board.turn == chess.WHITE else float("inf")
 
-        # Sort moves before searching
-        ordered_moves = MoveOrdering.sort_moves(board, legal_moves)
-
-        for move in ordered_moves:
+        for move in legal_moves:
             board.push(move)
-            score = -self._minimax(
-                board, self.depth - 1, float("-inf"), float("inf"), False
+            # White maximizes, Black minimizes
+            score = self._minimax(
+                board,
+                self.depth - 1,
+                float("-inf"),
+                float("inf"),
+                board.turn == chess.WHITE,
             )
             board.pop()
 
-            if score > best_score:
-                best_score = score
-                best_move = move
+            if board.turn == chess.WHITE:
+                if score > best_score:
+                    best_score = score
+                    best_move = move
+            else:
+                if score < best_score:
+                    best_score = score
+                    best_move = move
 
         return best_move
 
     def _minimax(self, board, depth, alpha, beta, maximizing_player):
-        if depth == 0:
+        if depth == 0 or board.is_game_over():
             return self._quiescence(
                 board, alpha, beta, maximizing_player, self.MAX_QUIESCENCE_DEPTH
             )
 
-        ordered_moves = MoveOrdering.sort_moves(board, board.legal_moves)
-
         if maximizing_player:
             max_eval = float("-inf")
-            for move in ordered_moves:
+            for move in board.legal_moves:
                 board.push(move)
                 eval = self._minimax(board, depth - 1, alpha, beta, False)
                 board.pop()
@@ -66,7 +71,7 @@ class MinimaxSearch(SearchAlgorithm):
             return max_eval
         else:
             min_eval = float("inf")
-            for move in ordered_moves:
+            for move in board.legal_moves:
                 board.push(move)
                 eval = self._minimax(board, depth - 1, alpha, beta, True)
                 board.pop()
