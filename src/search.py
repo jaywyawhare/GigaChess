@@ -44,14 +44,17 @@ class MinimaxSearch(SearchAlgorithm):
         return best_move
 
     def _find_move_at_depth(self, board, depth):
-        legal_moves = list(board.legal_moves)
-        if not legal_moves:
+        # Get safe moves and sort them
+        legal_moves = self.validator.get_safe_moves(board)
+        moves = MoveOrdering.sort_moves(board, legal_moves)
+
+        if not moves:
             return None
 
         best_move = None
         best_score = float("-inf") if board.turn == chess.WHITE else float("inf")
 
-        for move in legal_moves:
+        for move in moves:
             board.push(move)
             # White maximizes, Black minimizes
             score = self._minimax(
@@ -86,7 +89,8 @@ class MinimaxSearch(SearchAlgorithm):
             )
 
         best_move = None
-        moves = list(board.legal_moves)
+        # Prioritize safe moves in search
+        moves = self.validator.get_safe_moves(board)
         moves = MoveOrdering.sort_moves(board, moves)
 
         if maximizing_player:

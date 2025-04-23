@@ -37,3 +37,24 @@ class MoveValidator:
     def is_king_in_danger(board):
         """Check if the current side's king is in check or checkmate."""
         return board.is_check() or board.is_checkmate()
+
+    @staticmethod
+    def is_square_safe(board, square, color):
+        """Check if a square is safe from enemy attacks."""
+        return not board.is_attacked_by(not color, square)
+
+    @staticmethod
+    def get_safe_moves(board):
+        """Get moves that don't move pieces to attacked squares unless capturing."""
+        safe_moves = []
+        for move in board.legal_moves:
+            # Always allow captures
+            if board.is_capture(move):
+                safe_moves.append(move)
+                continue
+
+            # Check if destination square is safe
+            if not board.is_attacked_by(not board.turn, move.to_square):
+                safe_moves.append(move)
+
+        return safe_moves
