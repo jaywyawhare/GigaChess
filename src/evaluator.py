@@ -35,6 +35,14 @@ class Evaluator:
         score += self._evaluate_king_safety(board, chess.WHITE)
         score -= self._evaluate_king_safety(board, chess.BLACK)
 
+        # Add pawn structure evaluation
+        score += self._evaluate_pawn_structure(board, chess.WHITE)
+        score -= self._evaluate_pawn_structure(board, chess.BLACK)
+
+        # Add piece mobility
+        score += self._evaluate_mobility(board, chess.WHITE)
+        score -= self._evaluate_mobility(board, chess.BLACK)
+
         return score
 
     def _is_endgame(self, board):
@@ -85,3 +93,51 @@ class Evaluator:
         attack_score = -15 * attacking_pieces
 
         return pawn_shield_score + attack_score
+
+    def _evaluate_pawn_structure(self, board, color):
+        """Evaluate pawn structure for given color."""
+        score = 0
+        pawns = board.pieces(chess.PAWN, color)
+
+        # Evaluate doubled pawns
+        files = [0] * 8
+        for pawn in pawns:
+            files[chess.square_file(pawn)] += 1
+        doubled_pawns = sum(f - 1 for f in files if f > 1)
+        score -= doubled_pawns * 20
+
+        # Evaluate isolated pawns
+        for pawn in pawns:
+            file = chess.square_file(pawn)
+            isolated = True
+            for adj_file in [file - 1, file + 1]:
+                if 0 <= adj_file < 8:
+                    if any(chess.square_file(p) == adj_file for p in pawns):
+                        isolated = False
+                        break
+            if isolated:
+                score -= 15
+
+        return score
+
+    def _evaluate_mobility(self, board, color):
+        """Evaluate piece mobility for given color."""
+        score = 0
+        saved_turn = board.turn
+        board.turn = color
+
+        # Count legal moves for each piece
+        for piece_type in [chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN]:
+            pieces = board.pieces(piece_type, color)
+            for piece_square in pieces:
+                moves = len(
+                    [
+                        move
+                        for move in board.legal_moves
+                        if move.from_square == piece_square
+                    ]
+                )
+                score += moves * 2  # 2 points per legal move
+
+        board.turn = saved_turn
+        return score
