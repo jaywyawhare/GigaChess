@@ -1,5 +1,6 @@
 import chess
 from .move_ordering import MoveOrdering
+from .cache import TranspositionTable
 
 
 class SearchAlgorithm:
@@ -20,6 +21,9 @@ class MinimaxSearch(SearchAlgorithm):
         self.depth = depth
         self.MAX_QUIESCENCE_DEPTH = 5  # Limit quiescence search depth
         self.move_ordering = MoveOrdering()
+        self.tt = TranspositionTable()
+        self.LMR_THRESHOLD = 3  # depth threshold for late move reduction
+        self.FULL_DEPTH_MOVES = 4  # number of moves to search at full depth
 
     def find_best_move(self, board):
         legal_moves = list(board.legal_moves)
@@ -53,25 +57,51 @@ class MinimaxSearch(SearchAlgorithm):
         return best_move
 
     def _minimax(self, board, depth, alpha, beta, maximizing_player):
+        # Try transposition table lookup
+        tt_entry = self.tt.lookup(board)
+        if tt_entry and tt_entry["depth"] >= depth:
+            return tt_entry["score"]
+
         if depth == 0 or board.is_game_over():
             return self._quiescence(
                 board, alpha, beta, maximizing_player, self.MAX_QUIESCENCE_DEPTH
             )
 
+        best_move = None
+        moves = list(board.legal_moves)
+        moves = MoveOrdering.sort_moves(board, moves)
+
         if maximizing_player:
             max_eval = float("-inf")
-            for move in board.legal_moves:
+            for i, move in enumerate(moves):
                 board.push(move)
-                eval = self._minimax(board, depth - 1, alpha, beta, False)
+
+                # Late Move Reduction
+                if (
+                    depth >= self.LMR_THRESHOLD
+                    and i >= self.FULL_DEPTH_MOVES
+                    and not board.is_check()
+                ):
+                    eval = -self._minimax(board, depth - 2, -beta, -alpha, False)
+                    if eval > alpha:  # Re-search if promising
+                        eval = -self._minimax(board, depth - 1, -beta, -alpha, False)
+                else:
+                    eval = -self._minimax(board, depth - 1, -beta, -alpha, False)
+
                 board.pop()
                 max_eval = max(max_eval, eval)
                 alpha = max(alpha, eval)
+                if eval > max_eval:
+                    best_move = move
                 if beta <= alpha:
                     break
+
+            # Store position in transposition table
+            self.tt.store(board, depth, max_eval, "exact", best_move)
             return max_eval
         else:
             min_eval = float("inf")
-            for move in board.legal_moves:
+            for move in moves:
                 board.push(move)
                 eval = self._minimax(board, depth - 1, alpha, beta, True)
                 board.pop()
