@@ -31,6 +31,10 @@ class Evaluator:
             else:
                 score -= value
 
+        # Add king safety evaluation
+        score += self._evaluate_king_safety(board, chess.WHITE)
+        score -= self._evaluate_king_safety(board, chess.BLACK)
+
         return score
 
     def _is_endgame(self, board):
@@ -52,3 +56,32 @@ class Evaluator:
             if piece_type != chess.KING:  # Exclude king from material count
                 material += len(board.pieces(piece_type, color)) * value
         return material
+
+    def _evaluate_king_safety(self, board, color):
+        """Evaluate king safety based on pawn shield and attacking pieces."""
+        king_square = board.king(color)
+        if king_square is None:
+            return 0
+
+        score = 0
+
+        # Pawn shield
+        pawn_shield_score = 0
+        relative_squares = [-8, -7, -9] if color == chess.WHITE else [8, 7, 9]
+        for offset in relative_squares:
+            shield_square = king_square + offset
+            if 0 <= shield_square < 64:
+                if board.piece_at(shield_square) == chess.Piece(chess.PAWN, color):
+                    pawn_shield_score += 10
+
+        # Attacking pieces
+        attacking_pieces = len(
+            [
+                sq
+                for sq in board.attacks(king_square)
+                if board.piece_at(sq) and board.piece_at(sq).color != color
+            ]
+        )
+        attack_score = -15 * attacking_pieces
+
+        return pawn_shield_score + attack_score
