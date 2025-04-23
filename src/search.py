@@ -1,4 +1,5 @@
 import chess
+import time
 from .move_ordering import MoveOrdering
 from .cache import TranspositionTable
 
@@ -16,9 +17,11 @@ class SearchAlgorithm:
 class MinimaxSearch(SearchAlgorithm):
     """Minimax search with alpha-beta pruning and quiescence."""
 
-    def __init__(self, evaluator, depth=3):  # Increased default depth
+    def __init__(self, evaluator, max_depth=4):  # Updated to include max_depth
         super().__init__(evaluator)
-        self.depth = depth
+        self.max_depth = max_depth
+        self.time_limit = 5  # 5 seconds per move
+        self.depth = 3  # Default depth
         self.MAX_QUIESCENCE_DEPTH = 5  # Limit quiescence search depth
         self.move_ordering = MoveOrdering()
         self.tt = TranspositionTable()
@@ -26,6 +29,21 @@ class MinimaxSearch(SearchAlgorithm):
         self.FULL_DEPTH_MOVES = 4  # number of moves to search at full depth
 
     def find_best_move(self, board):
+        start_time = time.time()
+        best_move = None
+
+        # Iterative deepening
+        for depth in range(1, self.max_depth + 1):
+            if time.time() - start_time > self.time_limit:
+                break
+
+            current_move = self._find_move_at_depth(board, depth)
+            if current_move:
+                best_move = current_move
+
+        return best_move
+
+    def _find_move_at_depth(self, board, depth):
         legal_moves = list(board.legal_moves)
         if not legal_moves:
             return None
@@ -38,7 +56,7 @@ class MinimaxSearch(SearchAlgorithm):
             # White maximizes, Black minimizes
             score = self._minimax(
                 board,
-                self.depth - 1,
+                depth - 1,
                 float("-inf"),
                 float("inf"),
                 board.turn == chess.WHITE,
